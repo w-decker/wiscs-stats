@@ -1,0 +1,3 @@
+ipywidgets==7.8.1
+numpy==2.2.1
+wiscs==2.0.1
