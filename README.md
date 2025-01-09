@@ -1,5 +1,5 @@
 # wiscs-stats
-Statistical pipeline for WISCS project
+Statistical pipeline for WISCS
 
 ## Data generation
 The data generation process can be found in [$\texttt{/notebooks/generate\_data.ipynb}$](/notebooks/generate_data.ipynb). This notebook cannot be run in Colab, unfortunately due to incompatible environments. The custom module built for data generation, `wiscs` makes use of `numpy==2.2.1`, which is not functional in Colab at this time. 
