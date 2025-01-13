@@ -24,3 +24,9 @@ A skeleton for statistical analysis is located in [$\texttt{/notebooks/stats\_pi
 
 >[!NOTE]
 >There are specific and detailed instructions _inside_ the document too.
+
+## Power
+A notebook for computing power and minimum $n\_\{variable\}$ using a simulation approach and by numerically solving for $n\_\{variable\}$. This notebook makes use of [`mixedpower`](https://github.com/w-decker/mixedpower) a custom Python library not installable when activating the conda environment (see inside the notebook for installation).
+
+>[!NOTE]
+>There are specific and detailed instructions _inside_ the document too.
