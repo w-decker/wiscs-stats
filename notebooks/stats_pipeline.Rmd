@@ -1,0 +1,76 @@
+# Stats pipeline
+This markdown contains the necessary code for evaluating simulated data using [`wiscs`](https://github.com/w-decker/wiscs).
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Libraries
+```{r}
+library(lme4)
+library(psych)
+library(dplyr)
+```
+
+## Load data
+```{r}
+df <- as.data.frame(read.csv("../data/simulated_shared.csv"))
+```
+
+## Quick inspection
+```{r}
+describe(df)
+head(df)
+```
+
+## Linear models
+Below are two models that align with the hypotheses discussed in this study. `shared` models the hypothesis that conceptual representations exist in a shared space, while `separate` models the hypothesis that conceptual representations exist in separate spaces. These hypotheses are distinguised by the inlclusion of the interaction term `modality * question` in the `separate` model. Additional terms in the model include random intercepts and slopes for various factors of the experiment.
+### Random effects
+`subject`, `item` and `question` are coded to have random intercepts. This means that, the particular subject, item or question may differentially effect reaction times. Additionally, random slopes are coded for `item` and `question`. This means that each subject might vary in their responses to different items and questions.
+
+<div class="alert alert-warning">
+  <strong>Note:</strong> The model with the interaction term continues to outperform that without. I am convinced there is an issue with the data generation process but I am still troubleshooting. As you can see, there is clearly no interaction between modality and question in the data (see the plots in the data generation notebook). I will update accordingly. For now, these models are merely a skeleton.
+</div>
+
+```{r}
+shared <- lmer(rt ~ modality + question + (1 + item + question|subject) + (1|item) + (1|question) , data = df, REML = FALSE) # nolint
+separate <- lmer(rt ~ modality * question + (1 + item + question|subject) + (1|item) + (1|question), data = df, REML = FALSE) # nolint
+```
+
+## Model summaries
+```{r}
+summary(shared)
+summary(separate)
+```
+
+## AIC
+```{r}
+aicvalues <- c("Shared" = AIC(shared), "Separate" = AIC(separate))
+
+# print model with smallest AIC
+names(aicvalues)[which.min(aicvalues)]
+```
+
+## BIC
+```{r}
+bicvalues <- c("Shared" = BIC(shared), "Separate" = BIC(separate))
+
+# print model with smallest BIC
+names(bicvalues)[which.min(bicvalues)]
+```
+
+## Statistically compare models
+By running the below cell, we can statistically evaluate the difference between `shared` and `separate` models. 
+```{r}
+anova(shared, separate)
+```
+
+We can also see whether the models recovered the true parameters by running the below cell.
+```{r}
+variance <- VarCorr(shared) %>%
+  data.frame(.) %>%
+  pull(vcov, grp)
+
+variance
+```
