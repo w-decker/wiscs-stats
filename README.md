@@ -20,10 +20,10 @@ It is recommended to view and run the notebook in VS Code.
 >There are specific and detailed instructions _inside_ the document too.
 
 ## Statistical analysis
-A skeleton for statistical analysis is located in [$\texttt{/notebooks/stats\_pipeline.ipynb}$](notebooks/stats_pipeline.ipynb). This can be run in [Google Colab](https://colab.research.google.com/). Simply click <a href="/notebooks/stats_pipeline.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" height=15 alt="Open In Colab"/></a> at the top of the document.
+A skeleton for statistical analysis is located in [$\texttt{/notebooks/stats\_pipeline.Rmd}$](notebooks/stats_pipeline.Rmd). This can be viewed [here](https://html-preview.github.io/?url=https://github.com/w-decker/wiscs-stats/blob/main/notebooks/stats_pipeline.html).
 
 >[!NOTE]
->There are specific and detailed instructions _inside_ the document too.
+>For now, ignore the Jupyter Notebook version. 
 
 ## Power
 A notebook for computing power and minimum $n\_\{variable\}$ using a simulation approach and by numerically solving for $n\_\{variable\}$. This notebook makes use of [`mixedpower`](https://github.com/w-decker/mixedpower) a custom Python library not installable when activating the conda environment (see inside the notebook for installation).
