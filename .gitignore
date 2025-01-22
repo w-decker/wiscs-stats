@@ -173,3 +173,8 @@ cython_debug/
 *.DS_Store
 
 notebooks/stats_pipeline.ipynb
+
+test.ipynb
+test.rmd
+test.py
+test.csv
