@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(lme4)
 library(psych)
 library(dplyr)
+library(lmerTest)
 ```
 
 ## Load data
@@ -31,7 +32,7 @@ Below are two models that align with the hypotheses discussed in this study. `sh
 `subject`, `item` and `question` are coded to have random intercepts. This means that, the particular subject and question may differentially effect reaction times, and that this effect for `item` may be observed within questions. Additionally, a random slope is coded for `question`. This means that each subject might vary in their responses to different and questions.
 
 ```{r}
-shared <- lmer(rt ~ modality + question + (1 + question|subject) + (1|question/item) , data = df, REML = FALSE) # nolint
+shared <- lmer(rt ~ modality + question + (1|subject) + (1|question/item) , data = df, REML = FALSE) # nolint
 separate <- lmer(rt ~ modality * question + (1 + question|subject) + (1|question/item), data = df, REML = FALSE) # nolint
 ```
 
@@ -67,7 +68,8 @@ We can also see whether the models recovered the true parameters by running the 
 ```{r}
 variance <- VarCorr(shared) %>%
   data.frame(.) %>%
-  pull(vcov, grp)
+  pull(vcov, grp) %>%
+  sqrt(.)
 
 variance
 ```
