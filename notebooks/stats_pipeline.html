@@ -378,26 +378,26 @@ library(dplyr)</code></pre>
 <div id="quick-inspection" class="section level2">
 <h2>Quick inspection</h2>
 <pre class="r"><code>describe(df)</code></pre>
-<pre><code>##           vars     n   mean    sd median trimmed   mad    min    max  range
-## subject      1 60000  49.50 28.87  49.50   49.50 37.06   0.00  99.00  99.00
-## rt           2 60000 362.24 61.14 362.27  362.19 61.78 140.68 619.37 478.69
-## question     3 60000   7.00  4.32   7.00    7.00  5.93   0.00  14.00  14.00
-## item         4 60000   9.50  5.77   9.50    9.50  7.41   0.00  19.00  19.00
-## modality*    5 60000   1.50  0.50   1.50    1.50  0.74   1.00   2.00   1.00
-##           skew kurtosis   se
-## subject   0.00    -1.20 0.12
-## rt        0.02    -0.10 0.25
-## question  0.00    -1.21 0.02
-## item      0.00    -1.21 0.02
-## modality* 0.00    -2.00 0.00</code></pre>
+<pre><code>##           vars     n   mean     sd median trimmed    mad     min    max   range
+## subject      1 60000  49.50  28.87   49.5   49.50  37.06    0.00  99.00   99.00
+## rt           2 60000 353.81 119.77  353.6  353.94 118.01 -152.46 907.29 1059.75
+## question     3 60000   7.00   4.32    7.0    7.00   5.93    0.00  14.00   14.00
+## item         4 60000   9.50   5.77    9.5    9.50   7.41    0.00  19.00   19.00
+## modality*    5 60000   1.50   0.50    1.5    1.50   0.74    1.00   2.00    1.00
+##            skew kurtosis   se
+## subject    0.00    -1.20 0.12
+## rt        -0.02     0.13 0.49
+## question   0.00    -1.21 0.02
+## item       0.00    -1.21 0.02
+## modality*  0.00    -2.00 0.00</code></pre>
 <pre class="r"><code>head(df)</code></pre>
 <pre><code>##   subject       rt question item modality
-## 1       0 387.8259        0    0     word
-## 2       0 457.3182        0    1     word
-## 3       0 469.7071        0    2     word
-## 4       0 325.1622        0    3     word
-## 5       0 440.5720        0    4     word
-## 6       0 446.9309        0    5     word</code></pre>
+## 1       0 481.8966        0    0     word
+## 2       0 453.0718        0    1     word
+## 3       0 349.1989        0    2     word
+## 4       0 345.8360        0    3     word
+## 5       0 319.3673        0    4     word
+## 6       0 263.1647        0    5     word</code></pre>
 </div>
 <div id="linear-models" class="section level2">
 <h2>Linear models</h2>
@@ -408,101 +408,88 @@ models the hypothesis that conceptual representations exist in separate
 spaces. These hypotheses are distinguised by the inlclusion of the
 interaction term <code>modality * question</code> in the
 <code>separate</code> model. Additional terms in the model include
-random intercepts and slopes for various factors of the experiment. ###
-Random effects <code>subject</code>, <code>item</code> and
-<code>question</code> are coded to have random intercepts. This means
-that, the particular subject, item or question may differentially effect
-reaction times. Additionally, random slopes are coded for
-<code>item</code> and <code>question</code>. This means that each
-subject might vary in their responses to different items and
-questions.</p>
-<div class="alert alert-warning">
-<p><strong>Note:</strong> The model with the interaction term continues
-to outperform that without. I am convinced there is an issue with the
-data generation process but I am still troubleshooting. As you can see,
-there is clearly no interaction between modality and question in the
-data (see the plots in the data generation notebook). I will update
-accordingly. For now, these models are merely a skeleton.</p>
-</div>
-<pre class="r"><code>shared &lt;- lmer(rt ~ modality + question + (1 + item + question|subject) + (1|item) + (1|question) , data = df, REML = FALSE) # nolint</code></pre>
-<pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
-<pre class="r"><code>separate &lt;- lmer(rt ~ modality * question + (1 + item + question|subject) + (1|item) + (1|question), data = df, REML = FALSE) # nolint</code></pre>
-<pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
+random intercepts and slopes for various factors of the experiment.</p>
+<blockquote>
+<p>Note: see the <code>lme4</code> <a href="https://cran.r-project.org/web/packages/lme4/vignettes/lmer.pdf">documentation</a>
+for more on <em>formulas</em>. ### Random effects <code>subject</code>,
+<code>item</code> and <code>question</code> are coded to have random
+intercepts. This means that, the particular subject and question may
+differentially effect reaction times, and that this effect for
+<code>item</code> may be observed within questions. Additionally, a
+random slope is coded for <code>question</code>. This means that each
+subject might vary in their responses to different and questions.</p>
+</blockquote>
+<pre class="r"><code>shared &lt;- lmer(rt ~ modality + question + (1 + question|subject) + (1|question/item) , data = df, REML = FALSE) # nolint
+separate &lt;- lmer(rt ~ modality * question + (1 + question|subject) + (1|question/item), data = df, REML = FALSE) # nolint</code></pre>
 </div>
 <div id="model-summaries" class="section level2">
 <h2>Model summaries</h2>
 <pre class="r"><code>summary(shared)</code></pre>
 <pre><code>## Linear mixed model fit by maximum likelihood  [&#39;lmerMod&#39;]
-## Formula: rt ~ modality + question + (1 + item + question | subject) +  
-##     (1 | item) + (1 | question)
+## Formula: 
+## rt ~ modality + question + (1 + question | subject) + (1 | question/item)
 ##    Data: df
 ## 
 ##       AIC       BIC    logLik  deviance  df.resid 
-##  640979.4  641087.4 -320477.7  640955.4     59988 
+##  642160.9  642241.9 -321071.4  642142.9     59991 
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -4.0723 -0.6737 -0.0016  0.6722  4.2593 
+## -3.9056 -0.6795 -0.0011  0.6698  4.1904 
 ## 
 ## Random effects:
-##  Groups   Name        Variance  Std.Dev. Corr       
-##  subject  (Intercept) 1.212e+02 11.00841            
-##           item        1.782e-02  0.13351 -0.25      
-##           question    3.165e-03  0.05626  0.39  0.80
-##  item     (Intercept) 5.387e+03 73.39655            
-##  question (Intercept) 1.456e+03 38.16120            
-##  Residual             2.525e+03 50.25358            
-## Number of obs: 60000, groups:  subject, 100; item, 20; question, 15
+##  Groups        Name        Variance Std.Dev. Corr
+##  item:question (Intercept) 4573.39  67.627       
+##  subject       (Intercept)  166.51  12.904       
+##                question      73.66   8.583   0.82
+##  question      (Intercept)  752.79  27.437       
+##  Residual                  2490.53  49.905       
+## Number of obs: 60000, groups:  item:question, 300; subject, 100; question, 15
 ## 
 ## Fixed effects:
 ##              Estimate Std. Error t value
-## (Intercept)  363.0295    24.9527  14.549
-## modalityword  22.1665     0.4103  54.023
-## question      -1.6956     2.2811  -0.743
+## (Intercept)  357.9234    15.4610  23.150
+## modalityword  19.7251     0.4075  48.408
+## question      -1.9962     2.0601  -0.969
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr) mdltyw
-## modalitywrd -0.008       
-## question    -0.640  0.000
-## optimizer (nloptwrap) convergence code: 0 (OK)
-## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
+## modalitywrd -0.013       
+## question    -0.742  0.000</code></pre>
 <pre class="r"><code>summary(separate)</code></pre>
 <pre><code>## Linear mixed model fit by maximum likelihood  [&#39;lmerMod&#39;]
-## Formula: rt ~ modality * question + (1 + item + question | subject) +  
-##     (1 | item) + (1 | question)
+## Formula: 
+## rt ~ modality * question + (1 + question | subject) + (1 | question/item)
 ##    Data: df
 ## 
 ##       AIC       BIC    logLik  deviance  df.resid 
-##  640975.4  641092.4 -320474.7  640949.4     59987 
+##  642162.8  642252.8 -321071.4  642142.8     59990 
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -4.0578 -0.6727 -0.0017  0.6724  4.2436 
+## -3.9056 -0.6795 -0.0012  0.6700  4.1891 
 ## 
 ## Random effects:
-##  Groups   Name        Variance  Std.Dev. Corr       
-##  subject  (Intercept) 1.237e+02 11.12102            
-##           item        1.802e-02  0.13422 -0.27      
-##           question    3.535e-03  0.05946  0.31  0.83
-##  item     (Intercept) 5.585e+03 74.73106            
-##  question (Intercept) 1.429e+03 37.80527            
-##  Residual             2.525e+03 50.25029            
-## Number of obs: 60000, groups:  subject, 100; item, 20; question, 15
+##  Groups        Name        Variance Std.Dev. Corr
+##  item:question (Intercept) 4573.22  67.626       
+##  subject       (Intercept)  166.50  12.904       
+##                question      73.66   8.583   0.82
+##  question      (Intercept)  752.77  27.437       
+##  Residual                  2490.53  49.905       
+## Number of obs: 60000, groups:  item:question, 300; subject, 100; question, 15
 ## 
 ## Fixed effects:
 ##                        Estimate Std. Error t value
-## (Intercept)           362.17580   25.02232  14.474
-## modalityword           23.87383    0.78117  30.562
-## question               -1.57364    2.26030  -0.696
-## modalityword:question  -0.24391    0.09496  -2.568
+## (Intercept)           357.82789   15.46434  23.139
+## modalityword           19.91609    0.77581  25.671
+## question               -1.98260    2.06062  -0.962
+## modalityword:question  -0.02728    0.09431  -0.289
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr) mdltyw questn
-## modalitywrd -0.016              
-## question    -0.632  0.018       
-## mdltywrd:qs  0.013 -0.851 -0.021
-## optimizer (nloptwrap) convergence code: 0 (OK)
-## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
+## modalitywrd -0.025              
+## question    -0.742  0.019       
+## mdltywrd:qs  0.021 -0.851 -0.023</code></pre>
 </div>
 <div id="aic" class="section level2">
 <h2>AIC</h2>
@@ -510,7 +497,7 @@ accordingly. For now, these models are merely a skeleton.</p>
 
 # print model with smallest AIC
 names(aicvalues)[which.min(aicvalues)]</code></pre>
-<pre><code>## [1] &quot;Separate&quot;</code></pre>
+<pre><code>## [1] &quot;Shared&quot;</code></pre>
 </div>
 <div id="bic" class="section level2">
 <h2>BIC</h2>
@@ -528,13 +515,11 @@ models.</p>
 <pre class="r"><code>anova(shared, separate)</code></pre>
 <pre><code>## Data: df
 ## Models:
-## shared: rt ~ modality + question + (1 + item + question | subject) + (1 | item) + (1 | question)
-## separate: rt ~ modality * question + (1 + item + question | subject) + (1 | item) + (1 | question)
-##          npar    AIC    BIC  logLik deviance  Chisq Df Pr(&gt;Chisq)  
-## shared     12 640979 641087 -320478   640955                       
-## separate   13 640975 641092 -320475   640949 5.9913  1    0.01438 *
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+## shared: rt ~ modality + question + (1 + question | subject) + (1 | question/item)
+## separate: rt ~ modality * question + (1 + question | subject) + (1 | question/item)
+##          npar    AIC    BIC  logLik deviance  Chisq Df Pr(&gt;Chisq)
+## shared      9 642161 642242 -321071   642143                     
+## separate   10 642163 642253 -321071   642143 0.0837  1     0.7724</code></pre>
 <p>We can also see whether the models recovered the true parameters by
 running the below cell.</p>
 <pre class="r"><code>variance &lt;- VarCorr(shared) %&gt;%
@@ -542,10 +527,10 @@ running the below cell.</p>
   pull(vcov, grp)
 
 variance</code></pre>
-<pre><code>##       subject       subject       subject       subject       subject 
-##  1.211851e+02  1.782456e-02  3.164705e-03 -3.695446e-01  2.392248e-01 
-##       subject          item      question      Residual 
-##  5.975565e-03  5.387054e+03  1.456277e+03  2.525422e+03</code></pre>
+<pre><code>## item:question       subject       subject       subject      question 
+##    4573.39395     166.50583      73.66059      90.67156     752.78847 
+##      Residual 
+##    2490.53055</code></pre>
 </div>
 </div>
 
