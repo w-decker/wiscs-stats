@@ -23,7 +23,7 @@ It is recommended to view and run the notebook in VS Code.
 A skeleton for statistical analysis is located in [$\texttt{/notebooks/stats\_pipeline.Rmd}$](notebooks/stats_pipeline.Rmd). This can be viewed [here](https://html-preview.github.io/?url=https://github.com/w-decker/wiscs-stats/blob/main/notebooks/stats_pipeline.html).
 
 >[!NOTE]
->For now, ignore the Jupyter Notebook version. 
+>See [random_effects_demo.ipynb](/notebooks/random_effects_demo.ipynb) for a quick coding demo of simulating random effects.
 
 ## Power
 A notebook for computing power and minimum $n\_\{variable\}$ using a simulation approach and by numerically solving for $n\_\{variable\}$. This notebook makes use of [`mixedpower`](https://github.com/w-decker/mixedpower) a custom Python library not installable when activating the conda environment (see inside the notebook for installation).
