@@ -1,3 +1,5 @@
+import rpy2.robjects as robjects # type: ignore
+
 class RInterface(object):
 
     def __init__(self):
@@ -29,9 +31,20 @@ class RInterface(object):
                      """)
     
     @staticmethod
+    def r(code:str):
+        """Run R code using rpy2.robjects.r
+        
+        Parameters
+        ----------
+        code : str
+            The R code to be executed
+        """
+        robjects.r(code)
+    
+    @staticmethod
     def script(code:str):
         """
-        Run R code in the terminal.
+        Run R code in the terminal using Rscript.
 
         Descriotion
         -----------
