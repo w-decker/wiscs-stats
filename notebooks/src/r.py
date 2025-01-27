@@ -2,9 +2,6 @@ import rpy2.robjects as robjects # type: ignore
 
 class RInterface(object):
 
-    def __init__(self):
-        pass
-
     @staticmethod
     def init_rpy2():
         """
@@ -17,7 +14,8 @@ class RInterface(object):
         if not ipython:
             raise RuntimeError("This method must be called from a Jupyter notebook or IPython environment.")
         ipython.run_line_magic("load_ext", "rpy2.ipython")
-        global rpy2, robjects
+        global rpy2
+        global robjects
         rpy2 = importlib.import_module("rpy2")
         robjects = importlib.import_module("rpy2.robjects")
         ipython.run_line_magic("reload_ext", "rpy2.ipython")
@@ -39,10 +37,11 @@ class RInterface(object):
         code : str
             The R code to be executed
         """
+        import rpy2.robjects as robjects # type: ignore
         robjects.r(code)
     
     @staticmethod
-    def script(code:str):
+    def script(code:str, save:bool=False, fname:str=None):
         """
         Run R code in the terminal using Rscript.
 
@@ -58,5 +57,8 @@ class RInterface(object):
         import subprocess
         with open('.temp.R', 'w') as f:
             f.write(code)
+        if save:
+            with open(fname, 'w') as f:
+                f.write(code)
         subprocess.run(['Rscript', '.temp.R'])
         subprocess.run(['rm', '.temp.R'])
