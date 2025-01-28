@@ -1,4 +1,6 @@
 import rpy2.robjects as robjects # type: ignore
+import subprocess
+import re, os
 
 class RInterface(object):
 
@@ -41,24 +43,80 @@ class RInterface(object):
         robjects.r(code)
     
     @staticmethod
-    def script(code:str, save:bool=False, fname:str=None):
+    def script(code:str, save:bool=False,fname:str=None,capture:bool=False, grab:bool=False):
         """
-        Run R code in the terminal using Rscript.
-
-        Descriotion
-        -----------
-        This code writes R code to a hidden .R file, runs the file in the terminal, and then deletes the file afterwards.
+        Run R code in the terminal using Rscript, with support for grabbing variable values.
 
         Parameters
         ----------
         code : str
-            The R code to be executed
+            The R code to be executed.
+        save : bool, optional
+            Whether to save the R code to a file. Default is False.
+        fname : str, optional
+            The filename to save the R code if save is True. Default is None.
+        capture : bool, optional
+            Whether to capture the output of the R script. Default is False.
+        grab : bool, optional
+            Whether to extract specific variable values using the @grab annotation. Default is False.
+
+        Returns
+        -------
+        Any or tuple
+            If `grab` is True, returns the extracted variable(s). Otherwise, returns captured output or None.
         """
-        import subprocess
-        with open('.temp.R', 'w') as f:
-            f.write(code)
-        if save:
-            with open(fname, 'w') as f:
+        temp_file = ".temp.R"
+        temp_output = ".grab_output.txt"
+        try:
+            grab_vars = []
+            if grab:
+                annotated_lines = re.findall(r"# @grab\{(\w+)\}\n(.+)", code)
+                for var_type, var_def in annotated_lines:
+                    grab_vars.append((var_type, var_def.strip()))
+                capture_code = "\n".join(
+                    f'cat("{var_def}=", {var_def}, "\\n", file="{temp_output}", append=TRUE)' for _, var_def in grab_vars
+                )
+                code += f"\n# Grabbed Variables\n{capture_code}\n"
+
+            with open(temp_file, "w") as f:
                 f.write(code)
-        subprocess.run(['Rscript', '.temp.R'])
-        subprocess.run(['rm', '.temp.R'])
+            
+            if save:
+                if not fname:
+                    raise ValueError("If 'save' is True, 'fname' cannot be None.")
+                with open(fname, "w") as f:
+                    f.write(code)
+            
+            # Run the R script
+            subprocess.run(["Rscript", temp_file], check=True, text=True)
+
+            # Process the grabbed variables
+            if grab:
+                with open(temp_output, "r") as f:
+                    output = f.readlines()
+                
+                # Extract and process the variable values based on their type
+                results = []
+                for (var_type, var_def), line in zip(grab_vars, output):
+                    var_name, value = line.strip().split("=", 1)
+                    value = value.strip()
+                    if var_type == "float":
+                        results.append(float(value))
+                    elif var_type == "int":
+                        results.append(int(value))
+                    elif var_type == "str":
+                        results.append(value)
+                    else:
+                        raise ValueError(f"Unsupported type '{var_type}' in @grab annotation.")
+                
+                return tuple(results) if len(results) > 1 else results[0]
+
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"R script execution failed: {e.stderr or e}")
+        
+        finally:
+            # Ensure temporary files are deleted
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+            if os.path.exists(temp_output):
+                os.remove(temp_output)
