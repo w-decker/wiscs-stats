@@ -2,6 +2,8 @@ import numpy as np
 from glob import glob
 import os
 import ipywidgets as widgets # type: ignore
+import pandas as pd
+from rinterface.utils import to_r # type: ignore
 
 from wiscs.utils import make_tasks # type: ignore
 
@@ -138,3 +140,57 @@ def extract_params_from_widget(widget):
     }
 
     return params
+
+def fmt_script(shared_f:str, separate_f:str, df:pd.DataFrame, add:list[str]=None) -> str:
+    """Format R script for mixed-effects model analysis.
+    
+    Parameters
+    ----------
+    shared_f: str
+        Shared fixed effects formula.
+    separate_f: str
+        Separate fixed effects formula. 
+    df: pd.DataFrame
+        Dataframe containing the data.
+    add: list[str]  
+        Additional lines to add to the script.
+    """
+    _add = "\n".join(add) if add else ""
+    return(f"""
+    # imports
+    suppressMessages(library(lme4))
+    suppressMessages(library(psych))
+    suppressMessages(library(dplyr))
+    suppressMessages(library(lmerTest))
+
+    # import data from Python
+    df <- {to_r(df)}
+
+    # factorize + treatment coding
+    df$question <- as.factor(df$question)
+    df$subject <- as.factor(df$subject)
+    df$item <- as.factor(df$item)
+    df$modality <- factor(df$modality, levels = c("word", "image"))
+    contrasts(df$modality) <- c(-0.5, 0.5)
+
+    #  set reference levels
+    df$question <- relevel(df$question, ref = "0")
+    df$item <- relevel(df$item, ref = "0")
+    df$modality <- relevel(df$modality, ref = mean(as.numeric(df$modality)))
+
+    # add lines
+    {_add}
+
+    # model
+    shared <- lmer({shared_f}, data = df, REML = FALSE) # nolint
+    separate <- lmer({separate_f}, data = df, REML = FALSE) # nolint
+
+    # output
+    summary(shared)
+    summary(separate)
+
+    cat("\n")
+
+    # compare
+    anova(shared, separate)
+    """)
