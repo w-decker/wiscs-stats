@@ -186,11 +186,17 @@ def fmt_script(shared_f:str, separate_f:str, df:pd.DataFrame, add:list[str]=None
     separate <- lmer({separate_f}, data = df, REML = FALSE) # nolint
 
     # output
+    cat("\n\033[1m SHARED model summary\033[0m\n")
     summary(shared)
+    cat("\n\033[1m SEPARATE model summary\033[0m\n")
     summary(separate)
 
-    cat("\n")
+    cat("\n\033[1m ANOVA\033[0m\n")
 
     # compare
     anova(shared, separate)
+
+    # VarCorr
+    cat("\n\033[1m Variance components\033[0m\n")
+    VarCorr(shared)
     """)
