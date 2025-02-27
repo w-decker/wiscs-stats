@@ -6,6 +6,7 @@ import pandas as pd
 from rinterface.utils import to_r # type: ignore
 
 from wiscs.utils import make_tasks # type: ignore
+from wiscs.formula import Formula # type: ignore
 
 def base(files, y):
     for i in files:
@@ -141,7 +142,13 @@ def extract_params_from_widget(widget):
 
     return params
 
-def fmt_script(shared_f:str, separate_f:str, df:pd.DataFrame, add:list[str]=None) -> str:
+def fmt_script(df:pd.DataFrame, shared_re:Formula, separate_re:Formula=None, shared_fixed:str="rt ~ modality + question", 
+               separate_fixed:str=" rt ~ modality * question", add:list[str]=None, VarCorr_only:bool=False, optimizer:str="bobyqa",
+               maxfun:int=10000) -> str:
+    
+    if separate_re is None:
+        separate_re = shared_re
+
     """Format R script for mixed-effects model analysis.
     
     Parameters
@@ -156,7 +163,8 @@ def fmt_script(shared_f:str, separate_f:str, df:pd.DataFrame, add:list[str]=None
         Additional lines to add to the script.
     """
     _add = "\n".join(add) if add else ""
-    return(f"""
+    optimizer_control = f', control = lmerControl(optimizer = "{optimizer}", optCtrl = list(maxfun = {maxfun}))' if optimizer else ""
+    return(rf"""
     # imports
     suppressMessages(library(lme4))
     suppressMessages(library(psych))
@@ -176,27 +184,35 @@ def fmt_script(shared_f:str, separate_f:str, df:pd.DataFrame, add:list[str]=None
     #  set reference levels
     df$question <- relevel(df$question, ref = "0")
     df$item <- relevel(df$item, ref = "0")
-    df$modality <- relevel(df$modality, ref = mean(as.numeric(df$modality)))
 
     # add lines
     {_add}
 
+
     # model
-    shared <- lmer({shared_f}, data = df, REML = FALSE) # nolint
-    separate <- lmer({separate_f}, data = df, REML = FALSE) # nolint
+    shared <- lmer({shared_fixed + " + " + str(shared_re)}, data = df, REML = FALSE, {optimizer_control}) # nolint
+    separate <- lmer({separate_fixed + " + " + str(separate_re)}, data = df, REML = FALSE, {optimizer_control}) # nolint
 
-    # output
-    cat("\n\033[1m SHARED model summary\033[0m\n")
-    summary(shared)
-    cat("\n\033[1m SEPARATE model summary\033[0m\n")
-    summary(separate)
+    if ({to_r(VarCorr_only)}) {{
 
-    cat("\n\033[1m ANOVA\033[0m\n")
+        cat("\n\033[1m Variance components (Shared Model)\033[0m\n")
+        print(VarCorr(shared))
+        cat("\n\033[1m Variance components (Separate Model)\033[0m\n")
+        print(VarCorr(separate))
+    }} else {{
+        # full output
+        cat("\n\033[1m SHARED model summary\033[0m\n")
+        print(summary(shared))
+        cat("\n\033[1m SEPARATE model summary\033[0m\n")
+        print(summary(separate))
 
-    # compare
-    anova(shared, separate)
+        cat("\n\033[1m ANOVA\033[0m\n")
 
-    # VarCorr
-    cat("\n\033[1m Variance components\033[0m\n")
-    VarCorr(shared)
+        # compare
+        print(anova(shared, separate))
+
+        # VarCorr
+        cat("\n\033[1m Variance components\033[0m\n")
+        print(VarCorr(shared))
+    }}
     """)
